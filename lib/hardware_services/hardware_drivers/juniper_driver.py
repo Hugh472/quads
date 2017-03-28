@@ -127,10 +127,10 @@ class JuniperDriver(HardwareService):
                         stream.close()
         return
 
-    def list_clouds(self,parent):
+    def list_clouds(self, parent):
         parent.quads.clouds.cloud_list()
 
-    def list_hosts(self,parent):
+    def list_hosts(self, parent):
         parent.quads.hosts.host_list()
 
 

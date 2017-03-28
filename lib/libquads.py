@@ -7,6 +7,8 @@ import logging
 from subprocess import check_call
 from hardware_services.hardware_service import get_hardware_service, set_hardware_service
 from hardware_services.hardware_drivers.juniper_driver import JuniperDriver
+#The next line imports the HilDriver() object, like ^ that one imports JuniperDriver()
+from hardware_services.hardware_drivers.hil_driver import HilDriver
 
 class Hosts(object):
     def __init__(self, data):
@@ -82,7 +84,8 @@ class Quads(object):
         self.datearg = datearg
         self.logger = logging.getLogger("quads.Quads")
         self.logger.setLevel(logging.DEBUG)
-        set_hardware_service(JuniperDriver())
+        #set_hardware_service(JuniperDriver())  Taking away the hardcoding for Juniper
+        set_hardware_service(HilDriver()) #temporary hardcode to HIL
 
         if initialize:
             self.quads_init_data(force)
