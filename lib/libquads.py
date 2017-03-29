@@ -8,7 +8,7 @@ from subprocess import check_call
 from hardware_services.hardware_service import get_hardware_service, set_hardware_service
 from hardware_services.hardware_drivers.juniper_driver import JuniperDriver
 #The next line imports the HilDriver() object, like ^ that one imports JuniperDriver()
-from hardware_services.hardware_drivers.hil_driver import HilDriver
+from hardware_services.hardware_drivers.HilDriver import HilDriver
 
 class Hosts(object):
     def __init__(self, data):
