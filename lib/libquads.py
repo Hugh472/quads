@@ -2,7 +2,11 @@ from datetime import datetime
 import time
 import yaml
 import os
+<<<<<<< HEAD
 import requests
+=======
+import sys
+>>>>>>> class/master
 import logging
 import sys
 import importlib
@@ -558,6 +562,7 @@ class Quads(object):
             else:
                 print current_cloud
 
+<<<<<<< HEAD
     # add for EC528 HIL-QUADS integration project
     def quads_rest_call(self, method, url, request, json_data=None):
         r = requests.request(method, url + request, data=json_data)
@@ -565,3 +570,5 @@ class Quads(object):
             return r
 
 
+=======
+>>>>>>> class/master
