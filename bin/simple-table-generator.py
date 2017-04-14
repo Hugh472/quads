@@ -11,18 +11,21 @@ import array
 import yaml
 from subprocess import call
 from subprocess import check_call
+from datetime import datetime
 
 parser = argparse.ArgumentParser(description='Generate a simple HTML table with color depicting resource usage for the month')
 requiredArgs=parser.add_argument_group('Required Arguments')
 requiredArgs.add_argument('-d', '--days', dest='days', type=int, required=True, default=None, help='number of days to generate')
-requiredArgs.add_argument('--host-file', dest='host_file', type=str, required=True, default=None, help='file with list of hosts')
-requiredArgs.add_argument('--host-color-file', dest='host_color_file', type=str, required=True, default=None, help='file with list of colors to use across days per host')
+requiredArgs.add_argument('-m', '--month', dest='month', type=str, required=True, default=None, help='Month to generate')
+requiredArgs.add_argument('-y', '--year', dest='year', type=str, required=True, default=None, help='Year to generate')
+requiredArgs.add_argument('--host-file', dest='host_file', type=str, required=False, default=None, help='file with list of hosts')
 parser.add_argument('--gentime', '-g', dest='gentime', type=str, required=False, default=None, help='generate timestamp when created')
 
 args = parser.parse_args()
 host_file = args.host_file
-host_color_file = args.host_color_file
 days = args.days
+month = args.month
+year = args.year
 gentime = args.gentime
 
 # Load QUADS yaml config
@@ -126,14 +129,28 @@ def print_simple_table(data, data_colors, days):
     print "<tr>"
     print "<th>Name</th>"
     for i in range(0, days):
-        print "<th>" + ('0' if i < 9 else '') + str(i+1) + "</th>"
+        print "<th width=20>" + ('0' if i < 9 else '') + str(i+1) + "</th>"
     print "</tr>"
     for i in range(0, len(data)):
         print "<tr>"
         print "<td>" + str(data[i][0]) + "</td>"
         for j in range(0, days):
             chosen_color = data_colors[i][j]
-            print "<td bgcolor=\"" + color_array[int(chosen_color)-1] + "\"></td>"
+            cell_date = year + "-" + month + "-" + str(j + 1) + " 00:00"
+            cell_time = datetime.strptime(cell_date, '%Y-%m-%d %H:%M')
+            for c in sorted(quads.quads.cloud_history.data["cloud" + str(chosen_color)]):
+                if datetime.fromtimestamp(c) <= cell_time:
+                    display_description = quads.quads.cloud_history.data["cloud" + str(chosen_color)][c]["description"]
+                    display_owner = quads.quads.cloud_history.data["cloud" + str(chosen_color)][c]["owner"]
+                    display_ticket = quads.quads.cloud_history.data["cloud" + str(chosen_color)][c]["ticket"]
+            print "<td bgcolor=\"" + \
+                color_array[int(chosen_color)-1] + \
+                "\" data-toggle=\"tooltip\" title=\"" + \
+                "Description: " + display_description + "\n" +\
+                "Env: cloud" + str(chosen_color) + "\n" + \
+                "Owner: " + display_owner + "\n" + \
+                "RT: " + display_ticket + "\n" + \
+                "\"></td>"
         print "</tr>"
     print "</table>"
     print "</body>"
@@ -141,12 +158,27 @@ def print_simple_table(data, data_colors, days):
     return
 
 import csv
-with open(host_file, 'r') as f:
-    reader = csv.reader(f)
-    your_list = list(reader)
 
-with open(host_color_file, 'r') as f:
-    reader = csv.reader(f)
-    your_list_colors = list(reader)
+if host_file:
+    with open(host_file, 'r') as f:
+        reader = csv.reader(f)
+        your_list = list(reader)
+else:
+    your_list = []
+    for h in sorted(quads.quads.hosts.data.iterkeys()):
+        your_list.append([h])
+
+your_list_colors = []
+for h in your_list:
+    one_host = []
+    for d in range(0, days):
+        day = d + 1
+        if day < 10:
+            daystring = "0" + str(day)
+        else:
+            daystring = str(day)
+        default, current, override = quads._quads_find_current(h[0],"{}-{}-{} 00:00".format(year,month,daystring))
+        one_host.append(current.lstrip("cloud"))
+    your_list_colors.append(one_host)
 
 print_simple_table(your_list, your_list_colors, days)

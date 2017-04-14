@@ -69,6 +69,26 @@ class InventoryService(object):
         """ TODO add documentation
         """
 
+    @abstractmethod
+    def load_data(self, quads, force):
+        """ TODO add documentation
+        """
+
+    @abstractmethod
+    def init_data(self, quads, force):
+        """ TODO add documentation
+        """
+
+    @abstractmethod
+    def sync_state(self, quads):
+        """ TODO add documentation
+        """
+
+    @abstractmethod
+    def write_data(self, quads, doexit = True):
+        """ TODO add documentation
+        """
+
 
 _inventory_service = None
 
