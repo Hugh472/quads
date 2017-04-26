@@ -1,16 +1,32 @@
+# This file is part of QUADs.
+#
+# QUADs is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QUADs is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QUADs.  If not, see <http://www.gnu.org/licenses/>.
+
 from datetime import datetime
 import time
 import yaml
 import os
-import requests
 import logging
+import requests
 import sys
 import importlib
-from subprocess import check_call
-from hardware_services.inventory_service import get_inventory_service, set_inventory_service
-from hardware_services.network_service import get_network_service, set_network_service
-sys.path.append(os.path.dirname(__file__) + "/hardware_services/inventory_drivers/")
-sys.path.append(os.path.dirname(__file__) + "/hardware_services/network_drivers/")
+from Clouds import Clouds
+from History import History
+from QuadsData import QuadsData
+from CloudHistory import CloudHistory
+import urllib
+import json
 
 
 class Hosts(object):
@@ -86,11 +102,17 @@ class QuadsData(object):
         self.clouds = Clouds(data)
         self.history = History(data)
         self.cloud_history = CloudHistory(data)
+=======
+>>>>>>> class/master:lib/Quads.py
 
 
 class Quads(object):
 
+<<<<<<< HEAD:lib/libquads.py
     def __init__(self, config, statedir, movecommand, datearg, syncstate, initialize, force, hardwareservice):
+=======
+    def __init__(self, config, statedir, movecommand, datearg, syncstate, initialize, force, hardwareservice, hardwareserviceurl):
+>>>>>>> class/master:lib/Quads.py
         """
         Initialize a quads object.
         """
@@ -114,6 +136,7 @@ class Quads(object):
         self.inventory_service = get_inventory_service()
         self.network_service = get_network_service()
 
+<<<<<<< HEAD:lib/libquads.py
         if initialize:
             self.quads_init_data(force)
         try:
@@ -123,12 +146,24 @@ class Quads(object):
         except Exception, ex:
             self.logger.error(ex)
             exit(1)
+=======
+        self.hardware_service_url = hardwareserviceurl
+
+
+        self.inventory_service.load_data(self, force, initialize)
+>>>>>>> class/master:lib/Quads.py
 
         self.quads = QuadsData(self.data)
         self._quads_history_init()
 
         if syncstate or not datearg:
             self.quads_sync_state()
+
+    def get_clouds(self):
+        return self.quads.clouds.data
+
+    def get_history(self):
+        return self.quads.cloud_history.data
 
     # initialize history
     def _quads_history_init(self):
@@ -179,32 +214,12 @@ class Quads(object):
 
     # we occasionally need to write the data back out
     def quads_write_data(self, doexit = True):
-        try:
-            stream = open(self.config, 'w')
-            self.data = {"clouds":self.quads.clouds.data, "hosts":self.quads.hosts.data, "history":self.quads.history.data, "cloud_history":self.quads.cloud_history.data}
-            stream.write( yaml.dump(self.data, default_flow_style=False))
-            if doexit:
-                exit(0)
-        except Exception, ex:
-            self.logger.error("There was a problem with your file %s" % ex)
-            if doexit:
-                exit(1)
+        self.inventory_service.write_data(self, doexit)
 
     # if passed --init, the config data is wiped.
     # typically we will not want to continue execution if user asks to initialize
     def quads_init_data(self, force):
-        if not force:
-            if os.path.isfile(self.config):
-                self.logger.warn("Warning: " + self.config + " exists. Use --force to initialize.")
-                exit(1)
-        try:
-            stream = open(self.config, 'w')
-            data = {"clouds":{}, "hosts":{}, "history":{}, "cloud_history":{}}
-            stream.write( yaml.dump(data, default_flow_style=False))
-            exit(0)
-        except Exception, ex:
-            self.logger.error("There was a problem with your file %s" % ex)
-            exit(1)
+        self.inventory_service.init_data(self, force)
 
     # helper function called from other methods.  Never called from main()
     def _quads_find_current(self, host, datearg):
@@ -264,20 +279,7 @@ class Quads(object):
 
     # sync the statedir db for hosts with schedule
     def quads_sync_state(self):
-        # sync state
-        if self.datearg is not None:
-            self.logger.error("--sync and --date are mutually exclusive.")
-            exit(1)
-        for h in sorted(self.quads.hosts.data.iterkeys()):
-            default_cloud, current_cloud, current_override = self._quads_find_current(h, self.datearg)
-            if not os.path.isfile(self.statedir + "/" + h):
-                try:
-                    stream = open(self.statedir + "/" + h, 'w')
-                    stream.write(current_cloud + '\n')
-                    stream.close()
-                except Exception, ex:
-                    self.logger.error("There was a problem with your file %s" % ex)
-        return
+        self.inventory_service.sync_state(self)
 
     # list the hosts
     def quads_list_hosts(self):
@@ -386,6 +388,10 @@ class Quads(object):
     # update a cloud resource
     def quads_update_cloud(self, cloudresource, description, forceupdate, cloudowner, ccusers, cloudticket, qinq):
         # define or update a cloud resource
+<<<<<<< HEAD:lib/libquads.py
+=======
+
+>>>>>>> class/master:lib/Quads.py
         kwargs = {'cloudresource': cloudresource, 'description': description, 'forceupdate': forceupdate,
                   'cloudowner': cloudowner, 'ccusers': ccusers, 'cloudticket': cloudticket, 'qinq': qinq}
 
@@ -651,11 +657,64 @@ class Quads(object):
             else:
                 print current_cloud
 
+<<<<<<< HEAD:lib/libquads.py
 
+=======
+>>>>>>> class/master:lib/Quads.py
     # add for EC528 HIL-QUADS integration project
     def quads_rest_call(self, method, url, request, json_data=None):
         r = requests.request(method, url + request, data=json_data)
         if method == 'GET':
             return r
 
+<<<<<<< HEAD:lib/libquads.py
+=======
+    # the following class methods are added as utility functions for making calls to restful APIs,
+    # currently they are only used by the HIL drivers, but they are written generically so they can be
+    # reused if QUADS needs to interface with any other application in the future via http
+
+    @classmethod
+    def quads_urlify(self, url, *args):
+        """ strings together arguments in url format for rest call """
+
+        if url is None:
+            sys.exit("Error: server url not specified")
+
+        for arg in args:
+            url += '/' + urllib.quote(arg, '')
+        return url
+
+
+    @classmethod
+    def quads_status_code_check(self, response):
+        """ checks status codes to ensure rest call returned successfully """
+
+        if response.status_code < 200 or response.status_code >= 300:
+            sys.exit("Error: request returned: " + response.text)
+        else:
+            return response
+
+
+    @classmethod
+    def quads_put(self, url, data={}):
+        self.quads_status_code_check(requests.put(url, data=json.dumps(data)))
+
+
+    @classmethod
+    def quads_post(self, url, data={}):
+        self.quads_status_code_check(requests.post(url, data=json.dumps(data)))
+
+
+    @classmethod
+    def quads_get(self, url, params=None):
+        return self.quads_status_code_check(requests.get(url, params=params))
+
+
+    @classmethod
+    def quads_delete(self, url):
+        self.quads_status_code_check(requests.delete(url))
+
+
+
+>>>>>>> class/master:lib/Quads.py
 

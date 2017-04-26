@@ -140,7 +140,7 @@ class MockInventoryDriver(InventoryService):
     def list_hosts(self,quadsinstance):
         quadsinstance.quads.hosts.host_list()
 
-    def load_data(self, quadsinstance, force):
+    def load_data(self, quadsinstance, force, initialize):
         if initialize:
             quadsinstance.quads_init_data(force)
         try:
@@ -151,14 +151,47 @@ class MockInventoryDriver(InventoryService):
             quadsinstance.logger.error(ex)
             exit(1)
 
-    def write_data(self, quadsinstance, doexit = True):
-        quadsinstance.quads_write_data_(doexit)
+    def write_data(self, quadsinstance, doexit):
+        try:
+            stream = open(quadsinstance.config, 'w')
+            quadsinstance.data = {"clouds":quadsinstance.quads.clouds.data,
+             "hosts":quadsinstance.quads.hosts.data, "history":quadsinstance.quads.history.data, "cloud_history":quadsinstance.quads.cloud_history.data}
+            stream.write( yaml.dump(quadsinstance.data, default_flow_style=False))
+            if doexit:
+                exit(0)
+        except Exception, ex:
+            quadsinstance.logger.error("There was a problem with your file %s" % ex)
+            if doexit:
+                exit(1)
 
     def sync_state(self, quadsinstance):
-        quadsinstance.quads_sync_state_()
+        # sync state
+        if quadsinstance.datearg is not None:
+            quadsinstance.logger.error("--sync and --date are mutually exclusive.")
+            exit(1)
+        for h in sorted(quadsinstance.quads.hosts.data.iterkeys()):
+            default_cloud, current_cloud, current_override = quadsinstance._quads_find_current(h, quadsinstance.datearg)
+            if not os.path.isfile(quadsinstance.statedir + "/" + h):
+                try:
+                    stream = open(quadsinstance.statedir + "/" + h, 'w')
+                    stream.write(current_cloud + '\n')
+                    stream.close()
+                except Exception, ex:
+                    quadsinstance.logger.error("There was a problem with your file %s" % ex)
+        return
 
     def init_data(self, quadsinstance, force):
-        quadsinstance.quads_init_data_(force)
-
+        if not force:
+            if os.path.isfile(quadsinstance.config):
+                quadsinstance.logger.warn("Warning: " + quadsinstance.config + " exists. Use --force to initialize.")
+                exit(1)
+        try:
+            stream = open(quadsinstance.config, 'w')
+            data = {"clouds":{}, "hosts":{}, "history":{}, "cloud_history":{}}
+            stream.write( yaml.dump(data, default_flow_style=False))
+            exit(0)
+        except Exception, ex:
+            quadsinstance.logger.error("There was a problem with your file %s" % ex)
+            exit(1)
 
 

@@ -14,6 +14,12 @@ log: /opt/quads/log/quads.log
 #hardware_service: QuadsNative 
 hardware_service: Mock 
 
+# if hardware service provides an api server configure the following parameter
+# as of now only the Hil option makes calls to a server but this will allow easier future expansion and use of other services that require such a setup 
+# default is set to localhost on port 5000
+hardware_service_url: http://127.0.0.1:5000
+
+
 
 # used for reporting
 report_cc: someuser@example.com, someuser@example.com, someuser@example.com, someuser@example.com
